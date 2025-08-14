@@ -1,0 +1,17 @@
+Glue Workflow policy
+
+
+{
+	"Version": "2012-10-17",
+	"Statement": [
+		{
+			"Effect": "Allow",
+			"Action": [
+				"glue:StartWorkflowRun",
+				"glue:GetWorkflow",
+				"glue:NotifyEvent"
+			],
+			"Resource": "arn:aws:glue:ap-south-1:111238651186:workflow/etl-then-crawler-workflow"
+		}
+	]
+}

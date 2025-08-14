@@ -1,0 +1,20 @@
+Lambda Code:-
+
+import json
+import boto3
+import os
+
+glue_client = boto3.client('glue')
+
+def lambda_handler(event, context):
+    # Get the Glue job name from environment variables, fallback to a default job name
+    job_name = os.environ.get('GLUE_JOB_NAME', 'my-refining-job')
+
+    print(f"Starting Glue job: {job_name}")
+    try:
+        response = glue_client.start_job_run(JobName=job_name)
+        print(f"Started Glue job run ID: {response['JobRunId']}")
+        return {'status': 'SUCCESS', 'jobRunId': response['JobRunId']}
+    except Exception as e:
+        print(f"Error starting Glue job: {str(e)}")
+        return {'status': 'ERROR', 'message': str(e)}

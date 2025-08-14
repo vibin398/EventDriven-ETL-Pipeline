@@ -1,0 +1,17 @@
+Event Pattern
+
+{
+  "source": ["aws.s3"],
+  "detail-type": ["Object Created"],
+  "detail": {
+    "bucket": {
+      "name": ["fba-investigation"]
+    },
+    "object": {
+      "key": [{
+        "prefix": "raw/"
+      }]
+    }
+  }
+}
+

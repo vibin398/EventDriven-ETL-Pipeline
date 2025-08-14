@@ -1,0 +1,45 @@
+lambda policy
+
+{
+	"Version": "2012-10-17",
+	"Statement": [
+		{
+			"Effect": "Allow",
+			"Action": [
+				"glue:StartJobRun",
+				"glue:GetJobRun"
+			],
+			"Resource": "arn:aws:glue:ap-south-1:111238651186:job/my-refining-job"
+		},
+		{
+			"Effect": "Allow",
+			"Action": [
+				"glue:StartWorkflowRun",
+				"glue:GetWorkflow"
+			],
+			"Resource": "arn:aws:glue:ap-south-1:111238651186:workflow/etl-then-crawler-workflow"
+		},
+		{
+			"Effect": "Allow",
+			"Action": "iam:PassRole",
+			"Resource": [
+				"arn:aws:iam::111238651186:role/Glue-ETL-S3-RDS-Access-Role"
+			]
+		}
+	]
+}
+
+Trust relationship policy 
+
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Principal": {
+                "Service": "lambda.amazonaws.com"
+            },
+            "Action": "sts:AssumeRole"
+        }
+    ]
+}
