@@ -31,7 +31,7 @@ S3 (processed data)
 &nbsp;&nbsp;⬇  
 **Amazon Athena** Queries –
 
-![Architecture Diagram](docs/architectureFolder Structure**
+
 
 ```
 EventDriven-ETL-Pipeline/
@@ -77,12 +77,12 @@ EventDriven-ETL-Pipeline/
   - Prefix: `raw/`
   - Suffix: `.csv`
   - Destination: Lambda function `triggerGlueJobFunction`  
-  *(Screenshot: [s3_event_notification.png](docs/screenshots/s3_event_notification.png))*
+ 
 
 ***
 
 ### **2. Lambda Function**
-- Code: [`triggerGlueJobFunction.py`](lambda/triggerGlueJobFunction.py)
+- Code: 
 - Environment variable: `GLUE_JOB_NAME = my-refining-job`
 - Role Permissions: [`lambda_execution_role_policy.json`](iam_policies/lambda_execution_role_policy.json) + [`trust_relationship_lambda.json`](iam_policies/trust_relationship_lambda.json)
 - Allow S3 to invoke Lambda:
@@ -94,7 +94,7 @@ aws lambda add-permission \
   --principal s3.amazonaws.com \
   --source-arn arn:aws:s3:::fba-investigation
 ```
-*(Screenshot: [lambda_config.png](docs/screenshots/lambda_config.png))*
+
 
 ***
 
