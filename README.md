@@ -21,15 +21,15 @@ S3 (raw file upload)
 &nbsp;&nbsp;⬇  
 **Event Notification / EventBridge**  
 &nbsp;&nbsp;⬇  
-**AWS Lambda** – [`triggerGlueJobFunction.py`](../lambda/triggerGlueJobFunction.py)  
+**AWS Lambda** – 
 &nbsp;&nbsp;⬇  
-**AWS Glue Job** – [`glue_job_script.py`](../glue/glue_job_script.py)  
+**AWS Glue Job** –  
 &nbsp;&nbsp;⬇  
 S3 (processed data)  
 &nbsp;&nbsp;⬇  
 **Glue Crawler → Glue Data Catalog**  
 &nbsp;&nbsp;⬇  
-**Amazon Athena** Queries – [`athena_queries/sample_queries.sql`](../athena_queries/sample_queries.sql)
+**Amazon Athena** Queries –
 
 ![Architecture Diagram](docs/architectureFolder Structure**
 
