@@ -1,365 +1,137 @@
-\# EVENTDRIVEN-ETL-PIPELINE 
+# Event-Driven ETL Pipeline on AWS
 
+## Overview
 
+This project demonstrates a fully automated, serverless ETL pipeline on AWS using S3, Lambda, Glue (ETL jobs and crawlers), Glue Data Catalog, Amazon Athena, and CloudWatch Alarms.
 
-\## Overview  
+**Workflow:**
+- Data is uploaded to an S3 bucket (`my-ft-data/raw/`).
+- S3 Event Notification (or EventBridge) triggers a Lambda function.
+- Lambda initiates an AWS Glue ETL Job, which processes raw data and writes processed Parquet files to `my-ft-data/processed/`.
+- An AWS Glue Crawler scans the processed data and updates the Glue Data Catalog.
+- The data is now queryable instantly using Amazon Athena.
+- CloudWatch alarms notify when workflow steps fail.
 
+## Architecture
 
-
-An automated \*\*serverless AWS data pipeline\*\* that:  
-
-\- Detects file uploads to \*\*Amazon S3\*\*  
-
-\- Triggers \*\*AWS Lambda\*\* via \*\*EventBridge\*\* (or S3 Event Notification)  
-
-\- Starts an \*\*AWS Glue ETL Job\*\* to transform raw data  
-
-\- Optionally launches a \*\*Glue Crawler\*\* to refresh schema  
-
-\- Writes processed data to S3  
-
-\- Updates the \*\*Glue Data Catalog\*\*  
-
-\- Makes data immediately queryable in \*\*Amazon Athena\*\*  
-
-
-
-This pipeline is fully \*\*event-driven\*\* — no manual runs required. Perfect for building near real-time ingestion pipelines for structured data.  
-
-
-
----
-
-
-
-\## Architecture  
-
-
-
-S3 (raw data upload)
-
+S3 (raw file upload)
 ⬇
-
-EventBridge / S3 Event Notification
-
+Event Notification / EventBridge
 ⬇
-
-AWS Lambda (Orchestrator)
-
+AWS Lambda
 ⬇
-
 AWS Glue ETL Job
-
 ⬇
-
 S3 (processed data)
-
 ⬇
-
 Glue Crawler → Glue Data Catalog
-
 ⬇
-
 Amazon Athena
+⬇
+CloudWatch Alarms (monitoring across all steps)
 
 
+_Screenshot highlights stored in `/docs/screenshots/`_
 
-
-
----
-
-
-
-\## Repository Structure  
-
-
+## Repository Structure
 
 EventDriven-ETL-Pipeline/
-
 │
-
 ├── lambda/
-
-│ └── triggerGlueWorkflow.py # Lambda function code to start Glue workflow
-
+│ └── triggerGlueWorkflow.py
 │
-
 ├── glue/
-
-│ └── glue\_etl\_job.py # AWS Glue job script for ETL
-
+│ └── glue_etl_job.py
 │
-
-├── iam\_policies/
-
-│ ├── lambda\_execution\_policy.json # Lambda execution policy
-
-│ ├── glue\_execution\_policy.json # Glue execution policy
-
-│ ├── trust\_relationship\_lambda.json # Lambda trust policy
-
-│ ├── trust\_relationship\_glue.json # Glue trust policy
-
+├── iam_policies/
+│ ├── lambda_execution_policy.json
+│ ├── glue_execution_policy.json
+│ ├── trust_relationship_lambda.json
+│ ├── trust_relationship_glue.json
 │
-
 ├── eventbridge/
-
-│ └── eventbridge\_rule.json # EventBridge rule for triggering Lambda
-
+│ └── eventbridge_rule.json
 │
-
 ├── docs/
-
-│ ├── README.md # Documentation
-
+│ ├── README.md
 │ └── screenshots/
-
-│ ├── s3\_upload\_event.png
-
-│ ├── lambda\_trigger.png
-
-│ ├── glue\_job\_run.png
-
-│ ├── crawler\_catalog\_update.png
-
-│ └── athena\_query\_result.png
-
+│ ├── [S3, Lambda, Glue, Athena, Crawler, Alarm screenshots]
 │
+└── athena_queries/
+├── create_table.sql
+├── sample_queries.sql
 
-└── athena\_queries/
 
-├── create\_table.sql # Athena table DDL
+## CloudWatch Alarms: End-to-End Monitoring
 
-├── sample\_queries.sql # Query examples
+- **Glue Job Failure Alarm:** Triggers when any Glue ETL job fails.
+- **Glue Crawler Failure Alarm:** Triggers if crawler run fails.
+- **Lambda Error Alarm:** Triggers if Lambda function throws errors or is throttled.
+- **Workflow Failure/Trigger Alarms:** Monitor overall Glue workflow failures and invocations.
+- **SNS Email Notification:** Alarms send emails/SMS (see attached screenshot and example notification).
 
+> For each resource, create a CloudWatch alarm based on `FailedRuns` (Glue), `FailedCrawls` (Crawler), `Errors/Throttles` (Lambda), and specific custom metrics for workflow state.
 
+## Step-by-Step Setup
 
+1. **Create S3 Bucket**  
+   - `my-ft-data` with `raw/` for uploads, `processed/` for Glue output.
 
+2. **Configure S3 Event Notification or EventBridge**  
+   - Event type: Object created
+   - Prefix: `raw/`
+   - Suffix: `.csv`
+   - Destination: Lambda function
 
----
+3. **Lambda Function**
+   - Environment variable: `GLUE_WORKFLOW_NAME`
+   - IAM: Attach `lambda_execution_policy.json`
+   - Allow S3 to trigger Lambda
 
+4. **Glue ETL Job**
+   - Input: `s3://my-ft-data/raw/`
+   - Output: `s3://my-ft-data/processed/` (Parquet+Snappy)
+   - IAM: Attach `glue_execution_policy.json`
 
+5. **Glue Crawler**
+   - Scans: `s3://my-ft-data/processed/`
+   - Updates database: `my_investigation_db`
 
-\## Step-by-Step Setup  
+6. **Athena Integration**
+   - Point to Glue Data Catalog database
+   - Use SQL scripts in `athena_queries/`
 
+7. **Configure CloudWatch Alarms**
+   - For each job, crawler, Lambda, and workflow step
+   - Link to SNS topic for notification
 
+## Usage
 
-\### 1. S3 Bucket \& Event Notification  
+1. Upload a CSV file to your S3 bucket’s `raw/` folder.
+2. Your Lambda function triggers and starts the Glue ETL pipeline.
+3. Processed results are written to the `processed/` folder.
+4. The Glue crawler updates the Glue Data Catalog with schema from processed files.
+5. Query your data instantly via Athena.
+6. Receive email/SMS if the process fails at any stage.
 
+## Screenshots
 
+- S3 processed data files
+- Glue workflow visualization and status
+- Glue ETL job and Crawler run histories
+- Athena table and query output
+- CloudWatch alarm dashboard and SNS notification email
 
-\- Create an S3 bucket, e.g., `my-ft-data`  
+*(See images in `/docs/screenshots/`)*
 
-\- Add folders:  
+## Technologies
 
-&nbsp; - `/raw/` for uploads  
+- Amazon S3, EventBridge, Lambda, Glue (ETL, Crawler, Data Catalog, Workflow)
+- Amazon Athena, CloudWatch Alarms, SNS, IAM
 
-&nbsp; - `/processed/` for ETL outputs  
+## Credits
 
-\- Configure \*\*Event Notification\*\*:  
+Project created and maintained by **Vibin Krishna**  
+With guidance from AWS Documentation and Perplexity AI
 
-&nbsp; - \*\*Event Type:\*\* All object create events  
 
-&nbsp; - \*\*Prefix:\*\* raw/  
-
-&nbsp; - \*\*Suffix:\*\* .csv  
-
-&nbsp; - \*\*Destination:\*\* Lambda function `triggerGlueWorkflow`  
-
-
-
----
-
-
-
-\### 2. Lambda Function  
-
-
-
-\*\*Code:\*\* \[`triggerGlueWorkflow.py`](lambda/triggerGlueWorkflow.py)  
-
-\*\*Environment Variable:\*\*  
-
-
-
-GLUE\_WORKFLOW\_NAME = my-etl-project
-
-
-
-
-
-\*\*IAM Role Permissions:\*\*  
-
-\- Attach `lambda\_execution\_policy.json` and `trust\_relationship\_lambda.json`  
-
-
-
-\*\*Allow S3 to Invoke Lambda:\*\*  
-
-
-
-aws lambda add-permission
-
---function-name triggerGlueWorkflow
-
---statement-id s3invoke
-
---action lambda:InvokeFunction
-
---principal s3.amazonaws.com
-
---source-arn arn:aws:s3:::my-ft-data
-
-
-
-
-
----
-
-
-
-\### 3. AWS Glue Workflow \& ETL Job  
-
-
-
-\*\*ETL Script:\*\* \[`glue\_etl\_job.py`](glue/glue\_etl\_job.py)  
-
-\*\*IAM Role:\*\* Attach `glue\_execution\_policy.json` and `trust\_relationship\_glue.json`  
-
-
-
-This job:  
-
-\- Reads raw CSV data from `s3://my-ft-data/raw/`  
-
-\- Applies schema mapping  
-
-\- Removes duplicates and null fields  
-
-\- Evaluates data quality rules  
-
-\- Writes transformed data in Parquet (Snappy) to `s3://my-ft-data/processed/`
-
-
-
-Workflow triggers a Glue Crawler:
-
-\- Scans processed folder
-
-\- Updates Glue Data Catalog for Athena queries
-
-
-
----
-
-
-
-\### 4. AWS Glue Crawler  
-
-
-
-\- Target: `s3://my-ft-data/processed/`  
-
-\- Database: `my\_investigation\_db`  
-
-\- Schedule: On-demand or triggered by workflow  
-
-\- Output: Table visible in Glue Data Catalog  
-
-
-
----
-
-
-
-\### 5. Athena Integration  
-
-
-
-Run the following SQLs from `athena\_queries/`:  
-
-\- \*\*Create Table:\*\* \[`create\_table.sql`](athena\_queries/create\_table.sql)  
-
-\- \*\*Sample Queries:\*\* \[`sample\_queries.sql`](athena\_queries/sample\_queries.sql)  
-
-
-
-Query processed data directly via Athena console.
-
-
-
----
-
-
-
-\## Testing the Pipeline  
-
-
-
-1\. Upload `Fraud1.csv` to `s3://my-ft-data/raw/`  
-
-2\. Event triggers Lambda → starts Glue workflow  
-
-3\. Glue job processes the file and writes output to `processed/`  
-
-4\. Crawler updates schema in Data Catalog  
-
-5\. Query data using Athena  
-
-
-
----
-
-
-
-\## Troubleshooting  
-
-
-
-Refer to \[`docs/troubleshooting.md`](docs/troubleshooting.md) covering:  
-
-\- Lambda invocation issues  
-
-\- Glue job success but empty output  
-
-\- Crawler \\"no tables created\\" issue  
-
-\- Missing Athena schema  
-
-
-
----
-
-
-
-\## Technologies Used  
-
-
-
-\- Amazon S3  
-
-\- AWS EventBridge  
-
-\- AWS Lambda  
-
-\- AWS Glue (Workflow, Job, Crawler)  
-
-\- AWS IAM  
-
-\- Amazon Athena  
-
-\- AWS CloudWatch  
-
-
-
----
-
-
-
-\## Credits \& Acknowledgements  
-
-
-
-Project developed by \*\*Vibin Krishna\*\*  
-
-Guided and refined using \*\*AWS Documentation\*\* and \*\*Perplexity AI support (2025)\*\*
