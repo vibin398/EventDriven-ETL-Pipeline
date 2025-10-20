@@ -1,6 +1,7 @@
 # EventDriven-ETL-Pipeline
 
 Overview
+
 An automated serverless AWS data pipeline that:
 Detects file uploads to Amazon S3
 Triggers AWS Lambda via EventBridge (or S3 Event Notification)
@@ -10,6 +11,8 @@ Writes processed data to S3
 Updates the Glue Data Catalog
 Makes data immediately queryable in Amazon Athena
 This pipeline is fully event-driven — no manual runs required. Perfect for building near real-time ingestion pipelines for structured data.
+
+
 Architecture
 text
 S3 (raw data upload)
@@ -27,6 +30,9 @@ Glue Crawler → Glue Data Catalog
 Amazon Athena
 Repository Structure
 text
+
+
+
 EventDriven-ETL-Pipeline/
 │
 ├── lambda/
@@ -56,7 +62,10 @@ EventDriven-ETL-Pipeline/
 └── athena_queries/
 ├── create_table.sql                        # Athena table DDL
 ├── sample_queries.sql                      # Query examples
+
+
 Step-by-Step Setup
+
 1.	S3 Bucket & Event Notification
 Create an S3 bucket, e.g., my-ft-data
 Add folders:
@@ -67,7 +76,8 @@ Event Type: All object create events
 Prefix: raw/
 Suffix: .csv
 Destination: Lambda function triggerGlueWorkflow
-2.	Lambda Function
+
+3.	Lambda Function
 Code: triggerGlueWorkflow.py
 Environment Variable:
 text
@@ -82,7 +92,8 @@ aws lambda add-permission
 --action lambda:InvokeFunction   
 --principal s3.amazonaws.com   
 --source-arn arn:aws:s3:::my-ft-data
-3. AWS Glue Workflow & ETL Job
+
+5. AWS Glue Workflow & ETL Job
 ETL Script: glue_etl_job.py
 IAM Role: Attach glue_execution_policy.json and trust_relationship_glue.json
 This job:
@@ -94,12 +105,14 @@ Writes transformed data in Parquet (Snappy) to s3://my-ft-data/processed/
 Workflow triggers a Glue Crawler:
 Scans processed folder
 Updates Glue Data Catalog for Athena queries
-4.	AWS Glue Crawler
+
+6.	AWS Glue Crawler
 Target: s3://my-ft-data/processed/
 Database: my_investigation_db
 Schedule: On-demand or triggered by workflow
 Output: Table visible in Glue Data Catalog
-5.	Athena Integration
+
+7.	Athena Integration
 Run the following SQLs from athena_queries/:
 Create Table: create_table.sql
 Sample Queries: sample_queries.sql
