@@ -124,6 +124,8 @@ EventDriven-ETL-Pipeline/
 
 *(See images in `/docs/screenshots/`)*
 
+This project demonstrates an optimized, event-driven ETL pipeline running on AWS Glue that processes and crawls 600,000 rows in just 2.42 seconds. It showcases advanced data orchestration and automation using AWS services including Glue workflows, Lambda, and CloudWatch, delivering scalable, fast, and cost-efficient data processing with clear metrics proving substantial performance gains.
+
 ## Technologies
 
 - Amazon S3, EventBridge, Lambda, Glue (ETL, Crawler, Data Catalog, Workflow)
